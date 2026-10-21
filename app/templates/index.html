@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feedy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-mark" aria-label="Logo de Feedy">
+          <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo de Feedy" class="brand-logo" />
+        </div>
+        <h1>Feedy</h1>
+      </header>
+
+      <main class="content">
+        <section class="primary-actions">
+          <button class="action-button action-button--light" data-modal-target="portion-modal" type="button">
+            Configurar porcion
+          </button>
+          <button class="action-button action-button--light" data-modal-target="camera-modal" type="button">
+            Ver camara en<br />tiempo real
+          </button>
+        </section>
+
+        <section class="schedule-card">
+          <h2>Horas configuradas</h2>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Porciones</th>
+                  <th>Hora</th>
+                  <th>Eliminar</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-table-body">
+                <tr>
+                  <td>2</td>
+                  <td>10:00</td>
+                  <td>
+                    <button class="delete-button" type="button" aria-label="Eliminar horario de las 10:00">
+                      <img src="{{ url_for('static', filename='images/trash.webp') }}" alt="Eliminar" class="trash-icon-image" />
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>14:00</td>
+                  <td>
+                    <button class="delete-button" type="button" aria-label="Eliminar horario de las 14:00">
+                      <img src="{{ url_for('static', filename='images/trash.webp') }}" alt="Eliminar" class="trash-icon-image" />
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <button class="add-button" type="button" data-modal-target="schedule-modal">
+            Agregar
+          </button>
+        </section>
+      </main>
+
+      <footer class="device-status" aria-live="polite">
+        <span id="device-status-indicator" class="status-indicator status-indicator--online"></span>
+        <span id="device-status-text">Dispositivo conectado</span>
+      </footer>
+    </div>
+
+    <div class="modal-overlay hidden" id="portion-modal" aria-hidden="true">
+      <div class="modal-card modal-card--medium" role="dialog" aria-modal="true" aria-labelledby="portion-title">
+        <button class="close-button" type="button" data-close-modal="portion-modal" aria-label="Cerrar">
+          ×
+        </button>
+        <h3 id="portion-title">Configurar porcion</h3>
+
+        <label class="field-label" for="portion-time">Duración del giro</label>
+        <div class="input-row">
+          <input id="portion-time" name="portion-time" type="number" min="100" max="5000" step="50" value="1200" />
+          <span>ms</span>
+        </div>
+
+        <div class="modal-actions">
+          <button class="primary-button" type="button">Guardar</button>
+          <button class="secondary-button" type="button" id="test-portion-button">Probar porcion</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="camera-modal" aria-hidden="true">
+      <div class="modal-card modal-card--wide" role="dialog" aria-modal="true" aria-labelledby="camera-title">
+        <button class="close-button close-button--top-right" type="button" data-close-modal="camera-modal" aria-label="Cerrar vista de cámara">
+          ×
+        </button>
+        <h3 id="camera-title">Cámara en tiempo real</h3>
+        <div class="camera-frame">
+          <video id="camera-feed" autoplay muted playsinline></video>
+          <div class="camera-placeholder">
+            <span class="camera-pulse"></span>
+            <span>Feed de cámara activo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="schedule-modal" aria-hidden="true">
+      <div class="modal-card modal-card--medium" role="dialog" aria-modal="true" aria-labelledby="schedule-title">
+        <button class="close-button" type="button" data-close-modal="schedule-modal" aria-label="Cerrar">
+          ×
+        </button>
+        <h3 id="schedule-title">Agregar horario</h3>
+
+        <label class="field-label" for="schedule portion">Porciones</label>
+        <input id="schedule-portion" type="number" min="1" max="10" value="2" />
+
+        <label class="field-label" for="schedule-time">Hora</label>
+        <input id="schedule-time" type="time" value="10:00" />
+
+        <div class="modal-actions">
+          <button class="primary-button" type="button">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  </body>
+</html>
