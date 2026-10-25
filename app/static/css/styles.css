@@ -61,26 +61,35 @@ input {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 18px;
+    gap: 14px;
     min-height: 130px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     z-index: 20;
 }
 
 .brand-mark {
-    width: 92px;
-    height: 92px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--green-primary), var(--green-deep));
-    display: grid;
-    place-items: center;
-    box-shadow: inset 0 0 0 6px rgba(255, 255, 255, 0.18);
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.brand-mark {
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    overflow: visible;
+    flex-shrink: 0;
 }
 
 .brand-logo {
-    width: 84%;
-    height: 84%;
+    width: clamp(52px, 6vw, 78px);
+    height: clamp(52px, 6vw, 78px);
     object-fit: contain;
     display: block;
 }
