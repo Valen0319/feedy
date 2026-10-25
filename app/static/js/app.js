@@ -14,6 +14,99 @@ const closeModal = (modalId) => {
     modal.setAttribute('aria-hidden', 'true');
 };
 
+const showDeleteControls = (button) => {
+    const cell = button.closest('td');
+    if (!cell) return;
+
+    const actions = document.createElement('div');
+    actions.className = 'delete-actions';
+
+    const confirmButton = document.createElement('button');
+    confirmButton.type = 'button';
+    confirmButton.className = 'delete-action delete-action--confirm';
+    confirmButton.textContent = 'Confirmar';
+
+    const cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.className = 'delete-action delete-action--cancel';
+    cancelButton.textContent = 'Cancelar';
+
+    confirmButton.addEventListener('click', async () => {
+        const scheduleId = button.dataset.id;
+        if (!scheduleId) return;
+
+        const response = await fetch(`/api/schedules/${scheduleId}`, { method: 'DELETE' });
+        if (response.ok) {
+            await loadSchedules();
+        }
+    });
+
+    cancelButton.addEventListener('click', () => {
+        const restoreButton = document.createElement('button');
+        restoreButton.type = 'button';
+        restoreButton.className = 'delete-button';
+        restoreButton.textContent = 'Eliminar';
+        restoreButton.dataset.id = button.dataset.id;
+        restoreButton.setAttribute('aria-label', 'Eliminar horario');
+        restoreButton.addEventListener('click', () => showDeleteControls(restoreButton));
+
+        cell.innerHTML = '';
+        cell.appendChild(restoreButton);
+    });
+
+    actions.append(confirmButton, cancelButton);
+    cell.innerHTML = '';
+    cell.appendChild(actions);
+};
+
+const renderSchedules = (items = []) => {
+    const tableBody = document.getElementById('schedule-table-body');
+    if (!tableBody) return;
+
+    if (!items.length) {
+        tableBody.innerHTML = '<tr><td colspan="3">Sin horarios cargados</td></tr>';
+        return;
+    }
+
+    tableBody.innerHTML = items.map((item) => `
+        <tr>
+            <td>${item.portion}</td>
+            <td>${item.time}</td>
+            <td>
+                <button class="delete-button" type="button" data-id="${item.id}" aria-label="Eliminar horario ${item.time}">
+                    Eliminar
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    tableBody.querySelectorAll('.delete-button').forEach((button) => {
+        button.addEventListener('click', () => showDeleteControls(button));
+    });
+};
+
+const loadSchedules = async () => {
+    try {
+        const response = await fetch('/api/schedules');
+        const data = await response.json();
+        renderSchedules(data.items || []);
+    } catch (error) {
+        console.error('Error loading schedules', error);
+        renderSchedules([]);
+    }
+};
+
+const loadPortion = async () => {
+    try {
+        const response = await fetch('/api/portion');
+        const data = await response.json();
+        const input = document.getElementById('portion-time');
+        if (input) input.value = data.milliseconds ?? 1200;
+    } catch (error) {
+        console.error('Error loading portion', error);
+    }
+};
+
 document.querySelectorAll('[data-modal-target]').forEach((button) => {
     button.addEventListener('click', () => {
         const modalId = button.dataset.modalTarget;
@@ -53,8 +146,15 @@ document.addEventListener('keydown', (event) => {
 });
 
 document.getElementById('test-portion-button')?.addEventListener('click', async () => {
+    const input = document.getElementById('portion-time');
+    const milliseconds = Number(input?.value || 1200);
+
     try {
-        const response = await fetch('/api/portion/test', { method: 'POST' });
+        const response = await fetch('/api/portion/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ milliseconds }),
+        });
         const data = await response.json();
         if (response.ok) {
             alert(data.message || 'Porción de prueba ejecutada.');
@@ -65,39 +165,55 @@ document.getElementById('test-portion-button')?.addEventListener('click', async 
     }
 });
 
-document.querySelectorAll('.delete-button').forEach((button) => {
-    const resetButton = () => {
-        button.classList.remove('is-confirming');
-        button.innerHTML = `
-      <span class="trash-icon">
-        <span class="trash-lid"></span>
-        <span class="trash-body"></span>
-      </span>
-    `;
-        button.setAttribute('aria-label', 'Eliminar horario');
-        button.title = 'Eliminar horario';
+document.querySelector('#portion-modal .primary-button')?.addEventListener('click', async () => {
+    const input = document.getElementById('portion-time');
+    const milliseconds = Number(input?.value || 1200);
+
+    try {
+        const response = await fetch('/api/portion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ milliseconds }),
+        });
+
+        if (response.ok) {
+            closeModal('portion-modal');
+        }
+    } catch (error) {
+        console.error('Error saving portion', error);
+    }
+});
+
+document.querySelector('#schedule-modal .primary-button')?.addEventListener('click', async () => {
+    const schedulePortion = document.getElementById('schedule-portion');
+    const scheduleHour = document.getElementById('schedule-hour');
+    const scheduleMinute = document.getElementById('schedule-minute');
+
+    const hourValue = String(scheduleHour?.value ?? '10').padStart(2, '0');
+    const minuteValue = String(scheduleMinute?.value ?? '00').padStart(2, '0');
+
+    const payload = {
+        portion: Number(schedulePortion?.value || 1),
+        time: `${hourValue}:${minuteValue}`,
     };
 
-    button.addEventListener('click', () => {
-        const isConfirming = button.classList.contains('is-confirming');
+    try {
+        const response = await fetch('/api/schedules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
 
-        if (!isConfirming) {
-            button.classList.add('is-confirming');
-            button.innerHTML = 'Confirmar';
-            button.setAttribute('aria-label', 'Confirmar eliminación');
-            button.title = 'Confirmar eliminación';
-            return;
+        if (response.ok) {
+            closeModal('schedule-modal');
+            await loadSchedules();
+            if (schedulePortion) schedulePortion.value = '1';
+            if (scheduleHour) scheduleHour.value = '10';
+            if (scheduleMinute) scheduleMinute.value = '00';
         }
-
-        const row = button.closest('tr');
-        if (row) row.remove();
-        resetButton();
-    });
-
-    button.addEventListener('dblclick', (event) => {
-        event.preventDefault();
-        resetButton();
-    });
+    } catch (error) {
+        console.error('Error saving schedule', error);
+    }
 });
 
 const deviceStatusText = document.getElementById('device-status-text');
@@ -109,16 +225,22 @@ const updateDeviceStatus = async () => {
         const data = await response.json();
         const connected = Boolean(data.connected);
 
-        deviceStatusText.textContent = connected ? 'Dispositivo conectado' : 'Dispositivo no conectado';
-        deviceStatusIndicator.classList.toggle('status-indicator--offline', !connected);
+        if (deviceStatusText) {
+            deviceStatusText.textContent = connected ? 'Dispositivo conectado' : 'Dispositivo no conectado';
+        }
+
+        if (deviceStatusIndicator) {
+            deviceStatusIndicator.classList.toggle('status-indicator--offline', !connected);
+        }
     } catch (error) {
-        deviceStatusText.textContent = 'Dispositivo no conectado';
-        deviceStatusIndicator.classList.add('status-indicator--offline');
+        if (deviceStatusText) {
+            deviceStatusText.textContent = 'Dispositivo no conectado';
+        }
+        if (deviceStatusIndicator) {
+            deviceStatusIndicator.classList.add('status-indicator--offline');
+        }
     }
 };
-
-updateDeviceStatus();
-setInterval(updateDeviceStatus, 5000);
 
 const cameraModal = document.getElementById('camera-modal');
 const startLiveCamera = async () => {
@@ -149,3 +271,10 @@ const startLiveCamera = async () => {
 
 const cameraTrigger = document.querySelector('[data-modal-target="camera-modal"]');
 cameraTrigger?.addEventListener('click', startLiveCamera);
+
+window.addEventListener('DOMContentLoaded', async () => {
+    await loadSchedules();
+    await loadPortion();
+    updateDeviceStatus();
+    setInterval(updateDeviceStatus, 5000);
+});

@@ -153,6 +153,9 @@ input {
     box-shadow: 0 12px 22px rgba(16, 16, 16, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08);
     padding: 0 0 22px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 270px);
 }
 
 .schedule-card h2 {
@@ -167,7 +170,10 @@ input {
 }
 
 .table-wrap {
-    max-height: 240px;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    max-height: calc(100vh - 320px);
     overflow-y: auto;
     scrollbar-width: thin;
 }
@@ -202,30 +208,49 @@ tbody tr:last-child td {
 }
 
 .delete-button {
-    width: 58px;
-    height: 58px;
-    border-radius: 18px;
-    border: 2px solid rgba(107, 162, 169, 0.8);
-    background: rgba(143, 201, 213, 0.15);
+    min-width: 84px;
+    min-height: 44px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.48);
+    color: var(--dark-text);
     cursor: pointer;
     position: relative;
     transition: all 0.2s ease;
-    padding: 0;
-    box-shadow: 0 4px 10px rgba(31, 80, 88, 0.12);
+    padding: 8px 12px;
+    box-shadow: 0 4px 10px rgba(31, 80, 88, 0.08);
+    font-size: 0.95rem;
+    font-weight: 800;
 }
 
-.delete-button.is-confirming {
-    background: var(--danger-soft);
-    border-color: var(--danger);
-    box-shadow: 0 0 0 2px rgba(214, 90, 86, 0.2);
+.delete-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
 }
 
-.trash-icon-image {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    display: block;
-    margin: 0 auto;
+.delete-action {
+    min-width: 78px;
+    min-height: 38px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 800;
+    padding: 7px 10px;
+}
+
+.delete-action--confirm {
+    background: rgba(47, 184, 116, 0.16);
+    border-color: rgba(47, 184, 116, 0.5);
+    color: #1f7a4a;
+}
+
+.delete-action--cancel {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: var(--dark-text);
 }
 
 .add-button {
@@ -318,7 +343,8 @@ tbody tr:last-child td {
     gap: 12px;
 }
 
-input {
+input,
+select {
     width: 100%;
     min-height: 52px;
     border-radius: 14px;
@@ -331,6 +357,26 @@ input {
 
 .input-row input {
     max-width: 190px;
+}
+
+.time-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.time-picker select {
+    width: 110px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.time-separator {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--dark-text);
 }
 
 .modal-actions {
@@ -453,7 +499,17 @@ input {
         min-height: 80px;
     }
 
+    .table-wrap {
+        max-height: calc(100vh - 290px);
+    }
+
     .device-status {
         font-size: 1.7rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .table-wrap {
+        max-height: calc(100vh - 340px);
     }
 }
