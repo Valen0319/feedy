@@ -124,6 +124,7 @@ document.querySelectorAll('[data-close-modal]').forEach((button) => {
             if (videoEl) {
                 videoEl.pause();
                 videoEl.srcObject = null;
+                videoEl.removeAttribute('src');
                 videoEl.style.display = 'none';
             }
             if (placeholder) placeholder.style.display = 'flex';
@@ -245,26 +246,19 @@ const updateDeviceStatus = async () => {
 const cameraModal = document.getElementById('camera-modal');
 const startLiveCamera = async () => {
     if (!cameraModal || !cameraModal.classList.contains('hidden')) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'user',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                },
-                audio: false,
-            });
+        const videoEl = document.getElementById('camera-feed');
+        const placeholder = document.querySelector('.camera-placeholder');
 
-            const videoEl = document.getElementById('camera-feed');
-            const placeholder = document.querySelector('.camera-placeholder');
-            if (videoEl) {
-                videoEl.srcObject = stream;
-                videoEl.style.display = 'block';
-                videoEl.play();
-            }
+        if (!videoEl) return;
+
+        try {
+            videoEl.src = '/video_feed';
+            videoEl.load();
+            videoEl.style.display = 'block';
             if (placeholder) placeholder.style.display = 'none';
+            await videoEl.play();
         } catch (error) {
-            console.warn('Cámara no disponible en el navegador:', error);
+            console.warn('No fue posible iniciar el stream de la cámara de la Raspberry:', error);
         }
     }
 };

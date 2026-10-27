@@ -1,7 +1,17 @@
 import time
 from pathlib import Path
 
-from flask import Blueprint, current_app, jsonify, render_template, request, send_file
+from flask import Blueprint, Response, current_app, jsonify, render_template, request, send_file
+
+try:
+    import cv2
+except ImportError:  # pragma: no cover - only absent on non-Raspberry/dev machines
+    cv2 = None
+
+try:
+    from picamera2 import Picamera2
+except ImportError:  # pragma: no cover - only absent on non-Raspberry/dev machines
+    Picamera2 = None
 
 from app.arduino import arduino
 from app.database import add_schedule, delete_schedule, get_last_portion_ms, get_schedules, save_last_portion_ms
@@ -18,6 +28,46 @@ def index():
 def favicon():
     logo_path = Path(current_app.root_path) / 'static' / 'images' / 'logo.png'
     return send_file(logo_path, mimetype='image/png')
+
+
+def _camera_stream_generator():
+    if Picamera2 is None or cv2 is None:
+        raise RuntimeError('La cámara CSI no está disponible. Verifica que la Raspberry tenga la cámara habilitada y las dependencias instaladas.')
+
+    camera = Picamera2()
+    try:
+        config = camera.create_preview_configuration(main={'size': (640, 480)})
+        camera.configure(config)
+        camera.start()
+
+        while True:
+            frame = camera.capture_array()
+            if frame is None:
+                continue
+            if len(frame.shape) == 3 and frame.shape[2] == 4:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+
+            ok, encoded = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 75])
+            if not ok:
+                continue
+
+            yield (
+                b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + encoded.tobytes() + b'\r\n'
+            )
+    finally:
+        try:
+            camera.stop()
+        except Exception:
+            pass
+
+
+@bp.route('/video_feed')
+def video_feed():
+    try:
+        return Response(_camera_stream_generator(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    except RuntimeError as exc:
+        return Response(str(exc), mimetype='text/plain'), 503
 
 
 def _send_dispense_command(milliseconds: int, command_id: int | None = None):

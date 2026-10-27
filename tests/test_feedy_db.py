@@ -63,6 +63,16 @@ class FeedyDatabaseTestCase(unittest.TestCase):
         self.assertEqual(data['status'], 'READY')
         mock_send.assert_called_once_with('STATUS')
 
+    @patch('app.routes._camera_stream_generator', return_value=iter([b'--frame\r\nContent-Type: image/jpeg\r\n\r\nimg\r\n']))
+    def test_video_feed_route_returns_mjpg_stream(self, _mock_generator):
+        response = self.client.get('/video_feed')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, 'multipart/x-mixed-replace')
+        self.assertIn('boundary=frame', response.headers.get('Content-Type', ''))
+        payload = response.data
+        self.assertIn(b'--frame', payload)
+        self.assertIn(b'Content-Type: image/jpeg', payload)
+
 
 if __name__ == '__main__':
     unittest.main()
