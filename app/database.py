@@ -47,6 +47,14 @@ def init_db():
             "INSERT INTO settings (key, value) VALUES ('last_portion_ms', '1200')"
         )
 
+    existing_theme = db.execute(
+        "SELECT value FROM settings WHERE key = 'theme'"
+    ).fetchone()
+    if existing_theme is None:
+        db.execute(
+            "INSERT INTO settings (key, value) VALUES ('theme', 'light')"
+        )
+
     schedule_count = db.execute("SELECT COUNT(*) FROM schedules").fetchone()[0]
     if schedule_count == 0:
         db.executemany(
@@ -55,6 +63,43 @@ def init_db():
         )
 
     db.commit()
+
+
+def _normalize_theme(theme: str | None) -> str:
+    if theme is None:
+        return 'light'
+    normalized = str(theme).strip().lower()
+    if normalized == 'dark':
+        return 'dark'
+    return 'light'
+
+
+def get_theme() -> str:
+    try:
+        db = get_db()
+        result = db.execute(
+            "SELECT value FROM settings WHERE key = 'theme'"
+        ).fetchone()
+        if result is None:
+            return 'light'
+        return _normalize_theme(result['value'])
+    except Exception:
+        return 'light'
+
+
+def save_theme(theme: str) -> str:
+    normalized = _normalize_theme(theme)
+    try:
+        db = get_db()
+        db.execute(
+            "INSERT INTO settings (key, value) VALUES ('theme', ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (normalized,),
+        )
+        db.commit()
+    except Exception:
+        return normalized
+    return normalized
 
 
 def get_last_portion_ms() -> int:

@@ -22,4 +22,8 @@ def create_app(test_config=None):
     from app.routes import init_app
     init_app(app)
 
+    if not app.config.get('TESTING'):
+        from app.scheduler import start_scheduler
+        start_scheduler(app)
+
     return app

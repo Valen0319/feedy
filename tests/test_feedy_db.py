@@ -1,3 +1,4 @@
+import datetime
 import os
 import tempfile
 import unittest
@@ -72,6 +73,30 @@ class FeedyDatabaseTestCase(unittest.TestCase):
         payload = response.data
         self.assertIn(b'--frame', payload)
         self.assertIn(b'Content-Type: image/jpeg', payload)
+
+    @patch('app.scheduler.arduino.send_command', return_value=(True, 'OK', ''))
+    def test_schedule_executor_triggers_due_feeding(self, mock_send):
+        from app.database import add_schedule, save_last_portion_ms
+        from app.scheduler import process_due_schedules
+
+        save_last_portion_ms(1200)
+        add_schedule('12:00', 2)
+
+        with self.app.app_context():
+            process_due_schedules(datetime.datetime(2026, 1, 1, 12, 0, 0))
+
+        mock_send.assert_called_once_with('DISPENSE:2400')
+
+    def test_global_theme_is_persisted(self):
+        from app.database import get_theme, save_theme
+
+        save_theme('dark')
+        self.assertEqual(get_theme(), 'dark')
+
+        response = self.client.post('/api/theme', json={'theme': 'light'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()['theme'], 'light')
+        self.assertEqual(get_theme(), 'light')
 
 
 if __name__ == '__main__':

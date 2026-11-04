@@ -266,7 +266,53 @@ const startLiveCamera = async () => {
 const cameraTrigger = document.querySelector('[data-modal-target="camera-modal"]');
 cameraTrigger?.addEventListener('click', startLiveCamera);
 
+const applyTheme = (themeName) => {
+    const theme = themeName === 'dark' ? 'dark' : 'light';
+    document.body.dataset.theme = theme;
+
+    const toggle = document.getElementById('theme-toggle');
+    const icon = toggle?.querySelector('.theme-icon');
+    if (icon) {
+        icon.textContent = theme === 'dark' ? '🌙' : '☀️';
+    }
+    if (toggle) {
+        toggle.setAttribute('aria-pressed', String(theme === 'dark'));
+        toggle.title = theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro';
+    }
+};
+
+const saveThemePreference = async (themeName) => {
+    const theme = themeName === 'dark' ? 'dark' : 'light';
+
+    try {
+        const response = await fetch('/api/theme', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ theme }),
+        });
+        const data = await response.json();
+        if (response.ok && data.theme) {
+            applyTheme(data.theme);
+            return data.theme;
+        }
+    } catch (error) {
+        console.error('Error persisting theme', error);
+    }
+
+    applyTheme(theme);
+    return theme;
+};
+
+const themeToggle = document.getElementById('theme-toggle');
+themeToggle?.addEventListener('click', async () => {
+    const currentTheme = document.body.dataset.theme === 'dark' ? 'dark' : 'light';
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    await saveThemePreference(nextTheme);
+});
+
 window.addEventListener('DOMContentLoaded', async () => {
+    const initialTheme = document.body.dataset.theme || 'light';
+    applyTheme(initialTheme);
     await loadSchedules();
     await loadPortion();
     updateDeviceStatus();

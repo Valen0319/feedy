@@ -1,3 +1,4 @@
+import os
 import time
 from pathlib import Path
 
@@ -14,14 +15,25 @@ except ImportError:  # pragma: no cover - only absent on non-Raspberry/dev machi
     Picamera2 = None
 
 from app.arduino import arduino
-from app.database import add_schedule, delete_schedule, get_last_portion_ms, get_schedules, save_last_portion_ms
+from app.database import add_schedule, delete_schedule, get_last_portion_ms, get_schedules, get_theme, save_last_portion_ms, save_theme
 
 bp = Blueprint('main', __name__)
 
 
 @bp.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', theme=get_theme())
+
+
+@bp.route('/api/theme', methods=['GET', 'POST'])
+def theme_route():
+    if request.method == 'POST':
+        payload = request.get_json(silent=True) or {}
+        selected_theme = str(payload.get('theme', get_theme()) or get_theme())
+        theme = save_theme(selected_theme)
+        return jsonify({'theme': theme, 'saved': True})
+
+    return jsonify({'theme': get_theme()})
 
 
 @bp.route('/favicon.ico')
@@ -30,18 +42,76 @@ def favicon():
     return send_file(logo_path, mimetype='image/png')
 
 
-def _camera_stream_generator():
-    if Picamera2 is None or cv2 is None:
-        raise RuntimeError('La cámara CSI no está disponible. Verifica que la Raspberry tenga la cámara habilitada y las dependencias instaladas.')
+def _iter_camera_candidates():
+    seen = set()
+    configured = []
 
-    camera = Picamera2()
+    configured_value = os.getenv('CAMERA_DEVICE')
+    if configured_value:
+        configured.append(configured_value)
+
+    for index in range(10):
+        configured.append(index)
+
+    for path in sorted(Path('/dev').glob('video*')):
+        configured.append(str(path))
+
+    for item in configured:
+        identity = str(item)
+        if identity not in seen:
+            seen.add(identity)
+            yield item
+
+
+def _open_usb_camera():
+    if cv2 is None:
+        return None
+
+    for candidate in _iter_camera_candidates():
+        try:
+            cap = cv2.VideoCapture(candidate)
+            if cap is not None and cap.isOpened():
+                return cap
+        except Exception:
+            continue
+
+    return None
+
+
+def _camera_stream_generator():
+    if cv2 is None:
+        raise RuntimeError('OpenCV no está disponible. Instala la librería para la cámara USB.')
+
+    camera = None
     try:
-        config = camera.create_preview_configuration(main={'size': (640, 480)})
-        camera.configure(config)
-        camera.start()
+        camera = None
+        if Picamera2 is not None:
+            try:
+                camera = Picamera2()
+                config = camera.create_preview_configuration(main={'size': (640, 480)})
+                camera.configure(config)
+                camera.start()
+            except Exception:
+                if camera is not None:
+                    try:
+                        camera.close()
+                    except Exception:
+                        pass
+                camera = None
+
+        if camera is None:
+            camera = _open_usb_camera()
+            if camera is None:
+                raise RuntimeError('No se encontró una cámara disponible. Conecta la cámara USB y verifica el puerto o la variable CAMERA_DEVICE.')
 
         while True:
-            frame = camera.capture_array()
+            if hasattr(camera, 'capture_array'):
+                frame = camera.capture_array()
+            else:
+                ok, frame = camera.read()
+                if not ok or frame is None:
+                    continue
+
             if frame is None:
                 continue
             if len(frame.shape) == 3 and frame.shape[2] == 4:
@@ -57,7 +127,10 @@ def _camera_stream_generator():
             )
     finally:
         try:
-            camera.stop()
+            if hasattr(camera, 'stop'):
+                camera.stop()
+            elif hasattr(camera, 'release'):
+                camera.release()
         except Exception:
             pass
 
