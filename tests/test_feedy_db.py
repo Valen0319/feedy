@@ -64,6 +64,30 @@ class FeedyDatabaseTestCase(unittest.TestCase):
         self.assertEqual(data['status'], 'READY')
         mock_send.assert_called_once_with('STATUS')
 
+    @patch('app.routes._open_usb_camera')
+    @patch('app.routes.Picamera2', create=True)
+    @patch('app.routes.cv2')
+    def test_usb_camera_is_preferred_over_picamera2(self, mock_cv2, mock_picamera2, mock_open_usb):
+        class DummyFrame:
+            shape = (10, 10, 3)
+
+        class DummyEncoded:
+            def tobytes(self):
+                return b'jpeg-bytes'
+
+        frame = DummyFrame()
+        usb_camera = mock_open_usb.return_value
+        usb_camera.read.return_value = (True, frame)
+        mock_cv2.imencode.return_value = (True, DummyEncoded())
+        mock_cv2.cvtColor.return_value = frame
+
+        generator = self.app.view_functions['main.video_feed'].__globals__['_camera_stream_generator']()
+        payload = next(generator)
+
+        self.assertIn(b'--frame', payload)
+        mock_open_usb.assert_called_once()
+        mock_picamera2.assert_not_called()
+
     @patch('app.routes._camera_stream_generator', return_value=iter([b'--frame\r\nContent-Type: image/jpeg\r\n\r\nimg\r\n']))
     def test_video_feed_route_returns_mjpg_stream(self, _mock_generator):
         response = self.client.get('/video_feed')

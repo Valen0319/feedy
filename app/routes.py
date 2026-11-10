@@ -84,8 +84,8 @@ def _camera_stream_generator():
 
     camera = None
     try:
-        camera = None
-        if Picamera2 is not None:
+        camera = _open_usb_camera()
+        if camera is None and Picamera2 is not None:
             try:
                 camera = Picamera2()
                 config = camera.create_preview_configuration(main={'size': (640, 480)})
@@ -100,9 +100,7 @@ def _camera_stream_generator():
                 camera = None
 
         if camera is None:
-            camera = _open_usb_camera()
-            if camera is None:
-                raise RuntimeError('No se encontró una cámara disponible. Conecta la cámara USB y verifica el puerto o la variable CAMERA_DEVICE.')
+            raise RuntimeError('No se encontró una cámara disponible. Conecta la cámara USB y verifica el puerto o la variable CAMERA_DEVICE.')
 
         while True:
             if hasattr(camera, 'capture_array'):
