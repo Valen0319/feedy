@@ -122,8 +122,6 @@ document.querySelectorAll('[data-close-modal]').forEach((button) => {
             const videoEl = document.getElementById('camera-feed');
             const placeholder = document.querySelector('.camera-placeholder');
             if (videoEl) {
-                videoEl.pause();
-                videoEl.srcObject = null;
                 videoEl.removeAttribute('src');
                 videoEl.style.display = 'none';
             }
@@ -253,10 +251,8 @@ const startLiveCamera = async () => {
 
         try {
             videoEl.src = '/video_feed';
-            videoEl.load();
             videoEl.style.display = 'block';
             if (placeholder) placeholder.style.display = 'none';
-            await videoEl.play();
         } catch (error) {
             console.warn('No fue posible iniciar el stream de la cámara de la Raspberry:', error);
         }
