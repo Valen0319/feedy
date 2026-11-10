@@ -70,18 +70,25 @@ html,
 body {
     margin: 0;
     width: 100%;
+    min-height: 100%;
     height: 100%;
     font-family: 'Nunito', sans-serif;
     background: var(--background);
     color: var(--text-primary);
     overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 body {
     display: block;
     padding: 0;
-    background: linear-gradient(180deg, var(--background) 0%, var(--neutral-100) 100%);
+    background: var(--background);
     transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+html {
+    background: var(--background);
 }
 
 button,
@@ -108,10 +115,12 @@ select:focus-visible {
     width: 100vw;
     height: 100vh;
     max-height: 100vh;
-    background: linear-gradient(180deg, var(--beige) 0%, var(--neutral-100) 100%);
+    background: var(--background);
     position: relative;
     display: flex;
     flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .topbar {
@@ -120,9 +129,9 @@ select:focus-visible {
     left: 0;
     width: 100vw;
     max-width: 100vw;
-    background: var(--topbar-bg);
+    background: var(--background);
     backdrop-filter: blur(8px);
-    padding: 18px 30px 14px;
+    padding: calc(18px + env(safe-area-inset-top, 0px)) 30px 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -392,7 +401,7 @@ tbody tr:last-child td {
     justify-content: center;
     align-items: center;
     gap: 14px;
-    padding: 16px 18px 20px;
+    padding: calc(16px + env(safe-area-inset-bottom, 0px)) 18px 20px;
     color: var(--white);
     font-size: clamp(1.5rem, 3vw, 2.5rem);
     font-weight: 800;

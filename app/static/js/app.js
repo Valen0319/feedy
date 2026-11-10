@@ -243,19 +243,19 @@ const updateDeviceStatus = async () => {
 
 const cameraModal = document.getElementById('camera-modal');
 const startLiveCamera = async () => {
-    if (!cameraModal || !cameraModal.classList.contains('hidden')) {
-        const videoEl = document.getElementById('camera-feed');
-        const placeholder = document.querySelector('.camera-placeholder');
+    const videoEl = document.getElementById('camera-feed');
+    const placeholder = document.querySelector('.camera-placeholder');
 
-        if (!videoEl) return;
+    if (!videoEl) return;
 
-        try {
-            videoEl.src = '/video_feed';
-            videoEl.style.display = 'block';
-            if (placeholder) placeholder.style.display = 'none';
-        } catch (error) {
-            console.warn('No fue posible iniciar el stream de la cámara de la Raspberry:', error);
-        }
+    try {
+        const timestamp = Date.now();
+        videoEl.removeAttribute('src');
+        videoEl.src = `/video_feed?ts=${timestamp}`;
+        videoEl.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+    } catch (error) {
+        console.warn('No fue posible iniciar el stream de la cámara de la Raspberry:', error);
     }
 };
 
