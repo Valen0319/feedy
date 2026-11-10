@@ -119,13 +119,7 @@ document.querySelectorAll('[data-close-modal]').forEach((button) => {
         const modalId = button.dataset.closeModal;
         closeModal(modalId);
         if (modalId === 'camera-modal') {
-            const videoEl = document.getElementById('camera-feed');
-            const placeholder = document.querySelector('.camera-placeholder');
-            if (videoEl) {
-                videoEl.removeAttribute('src');
-                videoEl.style.display = 'none';
-            }
-            if (placeholder) placeholder.style.display = 'flex';
+            resetCameraStream();
         }
     });
 });
@@ -134,13 +128,23 @@ modalIds.forEach((modalId) => {
     const modal = document.getElementById(modalId);
     if (!modal) return;
     modal.addEventListener('click', (event) => {
-        if (event.target === modal) closeModal(modalId);
+        if (event.target === modal) {
+            closeModal(modalId);
+            if (modalId === 'camera-modal') {
+                resetCameraStream();
+            }
+        }
     });
 });
 
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-        modalIds.forEach(closeModal);
+        modalIds.forEach((modalId) => {
+            closeModal(modalId);
+            if (modalId === 'camera-modal') {
+                resetCameraStream();
+            }
+        });
     }
 });
 
@@ -215,6 +219,29 @@ document.querySelector('#schedule-modal .primary-button')?.addEventListener('cli
     }
 });
 
+const resetCameraStream = () => {
+    const frame = document.querySelector('.camera-frame');
+    const oldImage = document.getElementById('camera-feed');
+    const placeholder = document.querySelector('.camera-placeholder');
+
+    if (!frame) return;
+
+    const freshImage = document.createElement('img');
+    freshImage.id = 'camera-feed';
+    freshImage.alt = 'Vista en tiempo real de la cámara';
+    freshImage.setAttribute('loading', 'eager');
+    freshImage.src = 'about:blank';
+    freshImage.style.display = 'none';
+
+    if (oldImage && oldImage.parentNode) {
+        oldImage.parentNode.replaceChild(freshImage, oldImage);
+    } else {
+        frame.insertBefore(freshImage, frame.firstChild);
+    }
+
+    if (placeholder) placeholder.style.display = 'flex';
+};
+
 const deviceStatusText = document.getElementById('device-status-text');
 const deviceStatusIndicator = document.getElementById('device-status-indicator');
 
@@ -252,7 +279,9 @@ const startLiveCamera = async () => {
 
     try {
         const timestamp = Date.now();
-        videoEl.removeAttribute('src');
+        videoEl.onload = null;
+        videoEl.onerror = null;
+        videoEl.src = `about:blank`;
         videoEl.src = `/video_feed?ts=${timestamp}`;
         videoEl.style.display = 'block';
         if (placeholder) placeholder.style.display = 'none';
