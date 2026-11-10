@@ -21,6 +21,10 @@
     --shadow-card: 0 10px 22px rgba(38, 53, 44, 0.08);
     --status-success: #189155;
     --status-success-soft: rgba(24, 145, 85, 0.12);
+    --status-online: #1DBF73;
+    --status-online-soft: rgba(29, 191, 115, 0.18);
+    --status-offline: #E14B4B;
+    --status-offline-soft: rgba(225, 75, 75, 0.18);
     --danger: #C75B3B;
     --danger-soft: rgba(199, 91, 59, 0.12);
     --modal-backdrop: rgba(38, 53, 44, 0.35);
@@ -53,6 +57,10 @@ body[data-theme='dark'] {
     --shadow-card: 0 10px 22px rgba(0, 0, 0, 0.18);
     --status-success: #35B879;
     --status-success-soft: rgba(53, 184, 121, 0.13);
+    --status-online: #3AD98B;
+    --status-online-soft: rgba(58, 217, 139, 0.18);
+    --status-offline: #FF5F5F;
+    --status-offline-soft: rgba(255, 95, 95, 0.18);
     --danger: #D77A5F;
     --danger-soft: rgba(215, 122, 95, 0.15);
     --modal-backdrop: rgba(4, 8, 6, 0.6);
@@ -416,13 +424,18 @@ tbody tr:last-child td {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: var(--white);
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+    background: var(--status-online);
+    box-shadow: 0 0 0 4px var(--status-online-soft);
+}
+
+.status-indicator--online {
+    background: var(--status-online);
+    box-shadow: 0 0 0 4px var(--status-online-soft);
 }
 
 .status-indicator--offline {
-    background: var(--neutral-500);
-    box-shadow: 0 0 0 4px rgba(167, 178, 171, 0.22);
+    background: var(--status-offline);
+    box-shadow: 0 0 0 4px var(--status-offline-soft);
 }
 
 .modal-overlay {

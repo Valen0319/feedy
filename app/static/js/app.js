@@ -229,6 +229,7 @@ const updateDeviceStatus = async () => {
         }
 
         if (deviceStatusIndicator) {
+            deviceStatusIndicator.classList.toggle('status-indicator--online', connected);
             deviceStatusIndicator.classList.toggle('status-indicator--offline', !connected);
         }
     } catch (error) {
@@ -236,6 +237,7 @@ const updateDeviceStatus = async () => {
             deviceStatusText.textContent = 'Dispositivo no conectado';
         }
         if (deviceStatusIndicator) {
+            deviceStatusIndicator.classList.remove('status-indicator--online');
             deviceStatusIndicator.classList.add('status-indicator--offline');
         }
     }
